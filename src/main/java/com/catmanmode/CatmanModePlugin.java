@@ -25,8 +25,6 @@
 package com.catmanmode;
 
 import com.google.inject.Provides;
-import java.io.BufferedInputStream;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -34,9 +32,6 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -47,6 +42,7 @@ import net.runelite.api.PlayerComposition;
 import net.runelite.api.events.ClientTick;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.MenuEntryAdded;
+import net.runelite.client.audio.AudioPlayer;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -145,6 +141,9 @@ public class CatmanModePlugin extends Plugin
 	private ScheduledExecutorService executor;
 
 	@Inject
+	private AudioPlayer audioPlayer;
+
+	@Inject
 	private CatmanModeConfig config;
 
 	// Track which cat type each player has been assigned
@@ -156,9 +155,6 @@ public class CatmanModePlugin extends Plugin
 	// Track players we've already added Pet option for in current menu
 	private final Set<String> petOptionAddedFor = new HashSet<>();
 
-	// Cached purring sound clip
-	private Clip purringClip;
-
 	@Provides
 	CatmanModeConfig provideConfig(ConfigManager configManager)
 	{
@@ -169,7 +165,6 @@ public class CatmanModePlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		log.info("Catman Mode plugin started - everyone is now a cat!");
-		loadPurringSound();
 	}
 
 	@Override
@@ -180,54 +175,15 @@ public class CatmanModePlugin extends Plugin
 		playerCatTypes.clear();
 		animationsSet.clear();
 		petOptionAddedFor.clear();
-
-		if (purringClip != null)
-		{
-			purringClip.close();
-			purringClip = null;
-		}
-	}
-
-	private void loadPurringSound()
-	{
-		try
-		{
-			InputStream audioStream = getClass().getResourceAsStream("Purring.wav");
-			if (audioStream == null)
-			{
-				log.warn("Could not find Purring.wav sound file in plugin resources");
-				return;
-			}
-
-			InputStream bufferedIn = new BufferedInputStream(audioStream);
-			AudioInputStream ais = AudioSystem.getAudioInputStream(bufferedIn);
-			purringClip = AudioSystem.getClip();
-			purringClip.open(ais);
-			log.info("Purring sound loaded successfully");
-		}
-		catch (Exception e)
-		{
-			log.warn("Could not load purring sound: {}", e.getMessage(), e);
-		}
 	}
 
 	private void playPurringSound()
 	{
-		if (purringClip == null)
-		{
-			return;
-		}
-
 		executor.submit(() ->
 		{
 			try
 			{
-				if (purringClip.isRunning())
-				{
-					purringClip.stop();
-				}
-				purringClip.setFramePosition(0);
-				purringClip.start();
+				audioPlayer.play(CatmanModePlugin.class, "Purring.wav", 0);
 			}
 			catch (Exception e)
 			{
