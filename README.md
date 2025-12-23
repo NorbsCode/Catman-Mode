@@ -33,9 +33,11 @@ A fun RuneLite plugin that transforms all other players into cats! This is a cli
 
 This plugin is available on the RuneLite Plugin Hub. Search for "Catman Mode" in the Plugin Hub to install.
 
-## Screenshots
+## Video
 
-*Coming soon*
+https://github.com/user-attachments/assets/aaf0fd63-7c44-48d6-a0b1-18b5d2a4a226
+
+
 
 ## License
 
